@@ -2,13 +2,20 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 
 export default function Miembros() {
-  const [miembros, setMiembros] = useState([])
-  const [modal, setModal]       = useState(false)
-  const [form, setForm]         = useState({ nombre:'', correo:'', telefono:'', password:'', rol:'miembro' })
-  const [msg, setMsg]           = useState('')
-  const [busqueda, setBusqueda] = useState('')
+  const [miembros, setMiembros]     = useState([])
+  const [membresias, setMembresias] = useState([])
+  const [modal, setModal]           = useState(false)
+  const [form, setForm]             = useState({ nombre:'', correo:'', telefono:'', password:'', rol:'miembro' })
+  const [msg, setMsg]               = useState('')
+  const [busqueda, setBusqueda]     = useState('')
+  const [modalMemb, setModalMemb]   = useState(false)
+  const [miembroCambio, setMiembroCambio] = useState(null)
+  const [membresiaNueva, setMembresiaNueva] = useState('')
 
-  const cargar = () => axios.get('/miembros').then(r => setMiembros(r.data)).catch(() => {})
+  const cargar = () => {
+    axios.get('/miembros').then(r => setMiembros(r.data)).catch(() => {})
+    axios.get('/membresias').then(r => setMembresias(r.data)).catch(() => {})
+  }
   useEffect(() => { cargar() }, [])
 
   const guardar = async () => {
@@ -31,6 +38,22 @@ export default function Miembros() {
     if (!confirm('¿Eliminar este miembro?')) return
     await axios.delete(`/miembros/${id}`)
     cargar()
+  }
+
+  const abrirCambioMembresia = (m) => {
+    setMiembroCambio(m)
+    setMembresiaNueva(m.membresia_id?._id || '')
+    setModalMemb(true)
+  }
+
+  const guardarMembresia = async () => {
+    try {
+      await axios.put(`/miembros/${miembroCambio._id}`, { membresia_id: membresiaNueva || null })
+      setModalMemb(false)
+      setMsg('✅ Membresía actualizada')
+      cargar()
+      setTimeout(() => setMsg(''), 3000)
+    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Error')) }
   }
 
   const miembrosFiltrados = miembros.filter(m =>
@@ -63,7 +86,7 @@ export default function Miembros() {
         <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
           <thead>
             <tr style={{ background:'#1a3a5c' }}>
-              {['#','Nombre','Correo','Teléfono','Estado','Acciones'].map(h => (
+              {['#','Nombre','Correo','Teléfono','Membresía','Estado','Acciones'].map(h => (
                 <th key={h} style={{ color:'white', padding:'7px 8px', textAlign:'left' }}>{h}</th>
               ))}
             </tr>
@@ -75,6 +98,15 @@ export default function Miembros() {
                 <td style={{ padding:'7px 8px', fontWeight:'600', color:'#1a3a5c' }}>{m.nombre}</td>
                 <td style={{ padding:'7px 8px', color:'#555' }}>{m.correo}</td>
                 <td style={{ padding:'7px 8px', color:'#555' }}>{m.telefono}</td>
+                <td style={{ padding:'7px 8px' }}>
+                  {m.membresia_id ? (
+                    <span style={{ background:'#eaf3fb', color:'#1a3a5c', padding:'2px 9px', borderRadius:'20px', fontSize:'11px', fontWeight:'600' }}>
+                      {m.membresia_id.nombre}
+                    </span>
+                  ) : (
+                    <span style={{ color:'#aaa', fontSize:'11px' }}>Sin membresía</span>
+                  )}
+                </td>
                 <td style={{ padding:'7px 8px' }}>
                   <span style={{ background: m.estado?'#e6f4ea':'#fdecea',
                     color: m.estado?'#2e7d32':'#c62828', padding:'2px 9px',
@@ -88,6 +120,11 @@ export default function Miembros() {
                       borderRadius:'5px', cursor:'pointer', fontSize:'11px', marginRight:'4px' }}>
                     {m.estado ? 'Dar de baja':'Activar'}
                   </button>
+                  <button onClick={() => abrirCambioMembresia(m)}
+                    style={{ background:'#e65100', color:'white', border:'none', padding:'3px 9px',
+                      borderRadius:'5px', cursor:'pointer', fontSize:'11px', marginRight:'4px' }}>
+                    Membresía
+                  </button>
                   <button onClick={() => eliminar(m._id)}
                     style={{ background:'#c62828', color:'white', border:'none', padding:'3px 9px',
                       borderRadius:'5px', cursor:'pointer', fontSize:'11px' }}>
@@ -99,6 +136,39 @@ export default function Miembros() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal cambiar membresía */}
+      {modalMemb && miembroCambio && (
+        <div style={{ position:'fixed', top:0, left:0, width:'100%', height:'100%',
+          background:'rgba(0,0,0,0.4)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>
+          <div style={{ background:'white', borderRadius:'12px', padding:'20px', width:'360px' }}>
+            <div style={{ fontWeight:'700', color:'#1a3a5c', fontSize:'15px',
+              borderBottom:'1px solid #eee', paddingBottom:'10px', marginBottom:'14px' }}>
+              Cambiar membresía — {miembroCambio.nombre}
+            </div>
+            <label style={{ fontSize:'11px', fontWeight:'600', color:'#333', display:'block', marginBottom:'3px' }}>Tipo de membresía</label>
+            <select value={membresiaNueva} onChange={e => setMembresiaNueva(e.target.value)}
+              style={{ width:'100%', padding:'7px 10px', border:'1px solid #ccc', borderRadius:'6px', fontSize:'13px', color:'#222', marginBottom:'14px' }}>
+              <option value="">Sin membresía</option>
+              {membresias.map(mb => (
+                <option key={mb._id} value={mb._id}>{mb.nombre} — {mb.tipo} (${mb.precio} MXN)</option>
+              ))}
+            </select>
+            <div style={{ display:'flex', gap:'8px', justifyContent:'flex-end' }}>
+              <button onClick={() => setModalMemb(false)}
+                style={{ background:'#888', color:'white', border:'none', padding:'6px 14px',
+                  borderRadius:'6px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }}>
+                Cancelar
+              </button>
+              <button onClick={guardarMembresia}
+                style={{ background:'#2e6da4', color:'white', border:'none', padding:'6px 14px',
+                  borderRadius:'6px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }}>
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal nuevo miembro */}
       {modal && (

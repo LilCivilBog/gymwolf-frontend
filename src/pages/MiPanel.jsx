@@ -52,6 +52,14 @@ export default function MiPanel() {
   const dieta = miembro.dieta_id
   const tienePlan = miembro.pagoBiotipo
 
+  const ultimoPagoMembresia = pagos
+    .filter(p => p.concepto?.toLowerCase().startsWith('membresía'))
+    .sort((a, b) => new Date(b.fechaPago) - new Date(a.fechaPago))[0]
+
+  const fechaVencimiento = ultimoPagoMembresia && miembro.membresia_id?.duracionDias
+    ? new Date(new Date(ultimoPagoMembresia.fechaPago).getTime() + miembro.membresia_id.duracionDias * 86400000)
+    : null
+
   return (
     <div style={{ padding:'16px' }}>
       {/* Saludo */}
@@ -74,10 +82,16 @@ export default function MiPanel() {
           <div style={{ padding:'12px' }}>
             {miembro.membresia_id ? (
               <>
-                {[['Plan', miembro.membresia_id.nombre],['Tipo', miembro.membresia_id.tipo],['Precio', `$${miembro.membresia_id.precio} MXN`]].map(([l,v]) => (
+                {[
+                  ['Plan', miembro.membresia_id.nombre],
+                  ['Tipo', miembro.membresia_id.tipo],
+                  ['Precio', `$${miembro.membresia_id.precio} MXN`],
+                  ultimoPagoMembresia ? ['Fecha de pago', new Date(ultimoPagoMembresia.fechaPago).toLocaleDateString('es-MX')] : null,
+                  fechaVencimiento ? ['Vence el', fechaVencimiento.toLocaleDateString('es-MX')] : null,
+                ].filter(Boolean).map(([l,v]) => (
                   <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'0.5px solid #eee', fontSize:'13px' }}>
                     <span style={{ color:'#888' }}>{l}</span>
-                    <span style={{ fontWeight:'600', color:'#1a3a5c' }}>{v}</span>
+                    <span style={{ fontWeight:'600', color: l === 'Vence el' ? '#e65100' : '#1a3a5c' }}>{v}</span>
                   </div>
                 ))}
                 <span style={{ background:'#e6f4ea', color:'#2e7d32', padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'600', marginTop:'8px', display:'inline-block' }}>Activa</span>
