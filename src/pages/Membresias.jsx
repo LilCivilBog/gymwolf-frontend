@@ -65,7 +65,11 @@ export function Membresias() {
             ))}
             <label style={{fontSize:'11px',fontWeight:'600',color:'#333',display:'block',marginBottom:'3px'}}>Tipo</label>
             <select value={form.tipo} onChange={e=>setForm({...form,tipo:e.target.value})} style={inp}>
-              <option value="mensual">Mensual</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option>
+              <option value="mensual">Mensual (30 días)</option>
+              <option value="trimestral">Trimestral (90 días)</option>
+              <option value="anual">Anual (365 días)</option>
+              <option value="quincena">Quincena (15 días)</option>
+              <option value="diario">Diario (1 día)</option>
             </select>
             {msg&&<div style={{color:'#c62828',fontSize:'12px',marginBottom:'8px'}}>{msg}</div>}
             <div style={{display:'flex',gap:'8px',justifyContent:'flex-end'}}>

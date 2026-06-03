@@ -8,8 +8,9 @@ export default function Pagos() {
   const [pagos, setPagos]   = useState([])
   const [miembros, setMiembros] = useState([])
   const [modal, setModal]   = useState(false)
-  const [form, setForm]     = useState({ miembro_id:'', concepto:'membresía', monto:'', metodoPago:'efectivo', estado:'pagado' })
+  const [form, setForm]     = useState({ miembro_id:'', concepto:'membresía mensual', monto:'', metodoPago:'efectivo', estado:'pagado' })
   const [msg, setMsg]       = useState('')
+  const [busqueda, setBusqueda] = useState('')
 
   const cargar = () => {
     axios.get('/pagos').then(r => setPagos(r.data)).catch(()=>{})
@@ -20,10 +21,14 @@ export default function Pagos() {
   const guardar = async () => {
     try {
       await axios.post('/pagos', form)
-      setModal(false); setForm({ miembro_id:'', concepto:'membresía', monto:'', metodoPago:'efectivo', estado:'pagado' })
+      setModal(false); setForm({ miembro_id:'', concepto:'membresía mensual', monto:'', metodoPago:'efectivo', estado:'pagado' })
       setMsg('✅ Pago registrado'); cargar(); setTimeout(()=>setMsg(''),3000)
     } catch(err){ setMsg('❌ '+(err.response?.data?.error||'Error')) }
   }
+
+  const pagosFiltrados = pagos.filter(p =>
+    !busqueda || p.miembro_id?.nombre?.toLowerCase().includes(busqueda.toLowerCase())
+  )
 
   const inp = {width:'100%',padding:'7px 10px',border:'1px solid #ccc',borderRadius:'6px',fontSize:'13px',color:'#222',marginBottom:'8px'}
 
@@ -35,11 +40,18 @@ export default function Pagos() {
           <button onClick={()=>setModal(true)} style={{background:'#2e7d32',color:'white',border:'none',padding:'6px 14px',borderRadius:'6px',cursor:'pointer',fontWeight:'600',fontSize:'12px'}}>+ Registrar pago</button>
         </div>
         {msg && <div style={{marginBottom:'10px',fontSize:'13px',color:msg.includes('✅')?'#2e7d32':'#c62828'}}>{msg}</div>}
+        <div style={{position:'relative',marginBottom:'10px'}}>
+          <span style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',color:'#888',fontSize:'13px'}}>🔍</span>
+          <input type="text" placeholder="Buscar por nombre de miembro..."
+            value={busqueda} onChange={e => setBusqueda(e.target.value)}
+            style={{width:'100%',padding:'7px 10px 7px 32px',border:'1px solid #ccc',
+              borderRadius:'6px',fontSize:'13px',color:'#222',boxSizing:'border-box'}} />
+        </div>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px'}}>
           <thead><tr style={{background:'#1a3a5c'}}>
             {['Miembro','Concepto','Monto','Método','Estado','Fecha'].map(h=><th key={h} style={{color:'white',padding:'7px 8px',textAlign:'left'}}>{h}</th>)}
           </tr></thead>
-          <tbody>{pagos.map((p,i)=>(
+          <tbody>{pagosFiltrados.map((p,i)=>(
             <tr key={p._id} style={{background:i%2===0?'white':'#f8fbfd'}}>
               <td style={{padding:'7px 8px',fontWeight:'600',color:'#1a3a5c'}}>{p.miembro_id?.nombre || '-'}</td>
               <td style={{padding:'7px 8px',color:'#555'}}>{p.concepto}</td>
@@ -66,7 +78,14 @@ export default function Pagos() {
               <div>
                 <label style={{fontSize:'11px',fontWeight:'600',color:'#333',display:'block',marginBottom:'3px'}}>Concepto</label>
                 <select value={form.concepto} onChange={e=>setForm({...form,concepto:e.target.value})} style={inp}>
-                  <option value="membresía">Membresía</option><option value="rutina">Rutina</option><option value="dieta personalizada">Dieta</option>
+                  <option value="membresía mensual">Membresía mensual</option>
+                  <option value="membresía trimestral">Membresía trimestral</option>
+                  <option value="membresía anual">Membresía anual</option>
+                  <option value="membresía 15 días">Membresía 15 días</option>
+                  <option value="membresía 1 día">Membresía 1 día</option>
+                  <option value="rutina">Rutina</option>
+                  <option value="dieta personalizada">Dieta personalizada</option>
+                  <option value="consulta coach">Consulta coach</option>
                 </select>
               </div>
               <div>

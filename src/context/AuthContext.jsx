@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
 
   const login = async (correo, password) => {
     const res = await axios.post('/auth/login', { correo, password })
-    setUsuario({ nombre: res.data.nombre, rol: res.data.rol })
+    setUsuario({ nombre: res.data.nombre, rol: res.data.rol, correo: correo })
     return res.data.rol
   }
 

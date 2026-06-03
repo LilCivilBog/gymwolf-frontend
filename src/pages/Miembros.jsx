@@ -6,6 +6,7 @@ export default function Miembros() {
   const [modal, setModal]       = useState(false)
   const [form, setForm]         = useState({ nombre:'', correo:'', telefono:'', password:'', rol:'miembro' })
   const [msg, setMsg]           = useState('')
+  const [busqueda, setBusqueda] = useState('')
 
   const cargar = () => axios.get('/miembros').then(r => setMiembros(r.data)).catch(() => {})
   useEffect(() => { cargar() }, [])
@@ -32,6 +33,11 @@ export default function Miembros() {
     cargar()
   }
 
+  const miembrosFiltrados = miembros.filter(m =>
+    m.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    m.correo.toLowerCase().includes(busqueda.toLowerCase())
+  )
+
   const inp = { width:'100%', padding:'7px 10px', border:'1px solid #ccc',
     borderRadius:'6px', fontSize:'13px', color:'#222', marginBottom:'8px' }
 
@@ -47,6 +53,13 @@ export default function Miembros() {
           </button>
         </div>
         {msg && <div style={{ marginBottom:'10px', color: msg.includes('✅') ? '#2e7d32':'#c62828', fontSize:'13px' }}>{msg}</div>}
+        <div style={{ position:'relative', marginBottom:'10px' }}>
+          <span style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', color:'#888', fontSize:'13px' }}>🔍</span>
+          <input type="text" placeholder="Buscar por nombre o correo..."
+            value={busqueda} onChange={e => setBusqueda(e.target.value)}
+            style={{ width:'100%', padding:'7px 10px 7px 32px', border:'1px solid #ccc',
+              borderRadius:'6px', fontSize:'13px', color:'#222', boxSizing:'border-box' }} />
+        </div>
         <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
           <thead>
             <tr style={{ background:'#1a3a5c' }}>
@@ -56,7 +69,7 @@ export default function Miembros() {
             </tr>
           </thead>
           <tbody>
-            {miembros.map((m, i) => (
+            {miembrosFiltrados.map((m, i) => (
               <tr key={m._id} style={{ background: i%2===0?'white':'#f8fbfd' }}>
                 <td style={{ padding:'7px 8px', color:'#555' }}>{String(i+1).padStart(3,'0')}</td>
                 <td style={{ padding:'7px 8px', fontWeight:'600', color:'#1a3a5c' }}>{m.nombre}</td>
