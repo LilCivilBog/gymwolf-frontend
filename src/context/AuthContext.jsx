@@ -2,7 +2,7 @@ import { createContext, useContext, useState } from 'react'
 import axios from 'axios'
 
 // Configuración global de axios — todas las peticiones van al backend
-axios.defaults.baseURL = 'http://localhost:4000/api'
+axios.defaults.baseURL = 'https://gymwolf-backend.onrender.com/api'
 axios.defaults.withCredentials = true  // para enviar cookies con el token
 
 const AuthContext = createContext()
